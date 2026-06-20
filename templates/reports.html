@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue Cure — Reports</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg-deep:      #0E1A1D;
+    --bg-panel:     #142428;
+    --bg-panel-2:   #1A2D31;
+    --bg-flap:      #0B1517;
+    --ink:          #EAF4F1;
+    --ink-dim:      #93ACA8;
+    --ink-faint:    #5C7572;
+    --line:         rgba(234,244,241,0.09);
+    --coral:        #FF5A5F;
+    --amber:        #FFB627;
+    --mint:         #4ECDC4;
+    --mint-dim:     rgba(78,205,196,0.14);
+    --coral-dim:    rgba(255,90,95,0.14);
+    --amber-dim:    rgba(255,182,39,0.14);
+    --glow-a:       rgba(78,205,196,0.06);
+    --glow-b:       rgba(255,90,95,0.05);
+    --radius:       10px;
+  }
+
+  html[data-theme="ocean"]{
+    --bg-deep:#0B1620; --bg-panel:#11212E; --bg-panel-2:#16293A; --bg-flap:#081119;
+    --ink:#E8F1FB; --ink-dim:#8FA9C2; --ink-faint:#56697D; --line:rgba(232,241,251,0.09);
+    --coral:#FF6B6B; --amber:#FFC857; --mint:#4D9FFF;
+    --mint-dim:rgba(77,159,255,0.16); --coral-dim:rgba(255,107,107,0.14); --amber-dim:rgba(255,200,87,0.14);
+    --glow-a:rgba(77,159,255,0.08); --glow-b:rgba(255,107,107,0.05);
+  }
+  html[data-theme="violet"]{
+    --bg-deep:#170F22; --bg-panel:#20142E; --bg-panel-2:#281A3A; --bg-flap:#110A1A;
+    --ink:#F1EAFB; --ink-dim:#AC9BC6; --ink-faint:#6E5E83; --line:rgba(241,234,251,0.09);
+    --coral:#FF6F91; --amber:#FFD166; --mint:#B084F5;
+    --mint-dim:rgba(176,132,245,0.18); --coral-dim:rgba(255,111,145,0.14); --amber-dim:rgba(255,209,102,0.14);
+    --glow-a:rgba(176,132,245,0.09); --glow-b:rgba(255,111,145,0.05);
+  }
+  html[data-theme="ember"]{
+    --bg-deep:#1C1410; --bg-panel:#261B14; --bg-panel-2:#30231A; --bg-flap:#140E0A;
+    --ink:#FBF2EA; --ink-dim:#C7A693; --ink-faint:#846B5C; --line:rgba(251,242,234,0.1);
+    --coral:#E63946; --amber:#FFB627; --mint:#FF7849;
+    --mint-dim:rgba(255,120,73,0.18); --coral-dim:rgba(230,57,70,0.14); --amber-dim:rgba(255,182,39,0.14);
+    --glow-a:rgba(255,120,73,0.09); --glow-b:rgba(230,57,70,0.06);
+  }
+  html[data-theme="paper"]{
+    --bg-deep:#F6F4EE; --bg-panel:#FFFFFF; --bg-panel-2:#EFEBE2; --bg-flap:#1B2B2D;
+    --ink:#1B2B2D; --ink-dim:#5C6E6C; --ink-faint:#8B9B98; --line:rgba(27,43,45,0.1);
+    --coral:#D7263D; --amber:#C7860B; --mint:#1E847F;
+    --mint-dim:rgba(30,132,127,0.12); --coral-dim:rgba(215,38,61,0.1); --amber-dim:rgba(199,134,11,0.12);
+    --glow-a:rgba(30,132,127,0.05); --glow-b:rgba(215,38,61,0.04);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(circle at 15% 0%, var(--glow-a), transparent 45%),
+      radial-gradient(circle at 100% 30%, var(--glow-b), transparent 40%);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    transition: background-color .25s, color .25s;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; text-decoration: none; }
+  .mono{ font-family:'Space Mono', monospace; }
+
+  /* ---------- NAV ---------- */
+  .navbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px clamp(20px, 5vw, 56px);
+    border-bottom: 1px solid var(--line);
+    background: rgba(14,26,29,0.85);
+    backdrop-filter: blur(6px);
+    position: sticky; top:0; z-index: 10;
+  }
+  .navbar-brand{
+    font-weight:700; font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase;
+    display:flex; align-items:center; gap:10px;
+  }
+  .navbar-brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: var(--mint); box-shadow: 0 0 0 4px var(--mint-dim);
+  }
+  .nav-links{ display:flex; gap: 28px; align-items:center; }
+  .nav-links a{
+    font-size: 0.82rem; font-weight:600; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--ink-dim); padding-bottom: 4px; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  .nav-links a.active{ color: var(--mint); border-color: var(--mint); }
+  .nav-links a:hover{ color: var(--ink); border-color: var(--mint); }
+
+  .theme-picker{
+    background: var(--bg-panel-2); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 10px; font-size: 0.7rem; font-weight:600;
+    font-family: 'IBM Plex Sans', sans-serif; cursor:pointer;
+  }
+  .theme-picker:focus{ outline:none; box-shadow: 0 0 0 3px var(--mint-dim); }
+
+  .wrap{
+    max-width: 1180px; margin: 0 auto;
+    padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 56px) 64px;
+  }
+
+  .page-head{ display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom: 22px; }
+  .eyebrow{
+    font-size: 0.72rem; font-weight:700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0 0 8px;
+  }
+  .page-head h1{ font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight:700; margin:0; display:flex; align-items:center; gap:12px; }
+  .record-count{
+    font-family:'Space Mono', monospace; font-size: 0.85rem; font-weight:700;
+    background: var(--mint-dim); color: var(--mint); border-radius: 999px; padding: 7px 16px;
+  }
+
+  /* ---------- TABLE PANEL ---------- */
+  .panel{
+    background: var(--bg-panel); border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden;
+  }
+  .panel-title-row{ padding: 20px 26px 0; }
+  .panel-title{
+    font-size: 0.95rem; font-weight:700; margin: 0 0 16px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .tick{ color: var(--mint); font-family:'Space Mono', monospace; }
+
+  .table-scroll{ overflow-x: auto; }
+  .report-table{ width:100%; border-collapse: collapse; min-width: 760px; }
+  .report-table thead th{
+    text-align:left; font-size: 0.68rem; font-weight:700; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink-faint); padding: 12px 16px; border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .report-table tbody tr{ border-bottom: 1px solid var(--line); transition: background .15s; }
+  .report-table tbody tr:hover{ background: var(--bg-panel-2); }
+  .report-table tbody tr:last-child{ border-bottom:none; }
+  .report-table td{
+    padding: 14px 16px; font-size: 0.88rem; white-space: nowrap;
+    border-left: 3px solid var(--row-color, transparent);
+  }
+  .report-table td.token-cell, .report-table td.time-cell{
+    font-family:'Space Mono', monospace; color: var(--ink);
+  }
+  .report-table td.time-cell{ color: var(--ink-dim); font-size: 0.84rem; }
+
+  .priority-tag{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size: 0.78rem; font-weight:700; letter-spacing: 0.03em;
+  }
+  .priority-tag .dot{ width:8px; height:8px; border-radius:50%; }
+  .p-high .dot{ background: var(--coral); } .p-high{ color: var(--coral); }
+  .p-med .dot{ background: var(--amber); } .p-med{ color: var(--amber); }
+  .p-low .dot{ background: var(--mint); } .p-low{ color: var(--mint); }
+
+  .status-tag{
+    display:inline-flex; align-items:center; padding: 4px 12px; border-radius: 999px;
+    font-size: 0.74rem; font-weight:700; letter-spacing: 0.03em; text-transform: capitalize;
+  }
+  .s-completed{ background: var(--mint-dim); color: var(--mint); }
+  .s-waiting{ background: var(--amber-dim); color: var(--amber); }
+  .s-other{ background: var(--bg-panel-2); color: var(--ink-dim); }
+
+  .empty-row{ text-align:center; color: var(--ink-faint); padding: 36px 0; font-size: 0.9rem; }
+
+  @media (max-width: 760px){
+    .nav-links a{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition: none !important; } }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/reports">
+    <span class="dot"></span> Queue&nbsp;Cure
+  </a>
+  <div class="nav-links">
+    <a href="/">Dashboard</a>
+    <a href="/doctor">Doctor</a>
+    <a href="/reports" class="active">Reports</a>
+    <select id="themePicker" class="theme-picker" aria-label="Color theme">
+      <option value="mint">Midnight Mint</option>
+      <option value="ocean">Ocean Steel</option>
+      <option value="violet">Violet Bloom</option>
+      <option value="ember">Sunset Ember</option>
+      <option value="paper">Paper Light</option>
+    </select>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Full History</p>
+      <h1>📊 Queue Reports</h1>
+    </div>
+    <span class="record-count">{{ patients|length }} records</span>
+  </div>
+
+  <div class="panel" style="margin-bottom: 22px;">
+    <div class="panel-title-row">
+      <h3 class="panel-title"><span class="tick">📅</span> Patients Per Day</h3>
+    </div>
+    <div class="table-scroll">
+      <table class="report-table" style="min-width: 480px;">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Total Patients</th>
+            <th>Completed</th>
+            <th>Waiting</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in daily_summary %}
+          <tr>
+            <td class="time-cell">{{ day[0] }}</td>
+            <td class="token-cell">{{ day[1] }}</td>
+            <td><span class="status-tag s-completed">{{ day[2] }}</span></td>
+            <td><span class="status-tag s-waiting">{{ day[3] }}</span></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="empty-row">No data yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title-row">
+      <h3 class="panel-title"><span class="tick">≡</span> All Patient Records</h3>
+    </div>
+    <div class="table-scroll">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Name</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Added Time</th>
+            <th>Completed Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for patient in patients %}
+          <tr>
+            <td class="token-cell">{{ "%03d"|format(patient[2]) }}</td>
+            <td>{{ patient[1] }}</td>
+            <td style="--row-color: {{ 'var(--coral)' if patient[4] == 'High' else ('var(--amber)' if patient[4] == 'Medium' else 'var(--mint)') }};">
+              {% if patient[4] == "High" %}
+                <span class="priority-tag p-high"><span class="dot"></span>High</span>
+              {% elif patient[4] == "Medium" %}
+                <span class="priority-tag p-med"><span class="dot"></span>Medium</span>
+              {% else %}
+                <span class="priority-tag p-low"><span class="dot"></span>Low</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if patient[3] == "Completed" %}
+                <span class="status-tag s-completed">{{ patient[3] }}</span>
+              {% elif patient[3] == "Waiting" %}
+                <span class="status-tag s-waiting">{{ patient[3] }}</span>
+              {% else %}
+                <span class="status-tag s-other">{{ patient[3] }}</span>
+              {% endif %}
+            </td>
+            <td>{{ patient[5] }}</td>
+            <td class="time-cell">{{ patient[6] }}</td>
+            <td class="time-cell">{{ patient[7] }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="empty-row">No records yet. Completed and queued patients will show up here.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function(){
+    var picker = document.getElementById('themePicker');
+    var saved = localStorage.getItem('queueCureTheme') || 'mint';
+    document.documentElement.setAttribute('data-theme', saved);
+    picker.value = saved;
+    picker.addEventListener('change', function(){
+      document.documentElement.setAttribute('data-theme', this.value);
+      localStorage.setItem('queueCureTheme', this.value);
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue Cure — Waiting Room</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg-deep:      #0E1A1D;
+    --bg-panel:     #142428;
+    --bg-panel-2:   #1A2D31;
+    --bg-flap:      #0B1517;
+    --ink:          #EAF4F1;
+    --ink-dim:      #93ACA8;
+    --ink-faint:    #5C7572;
+    --line:         rgba(234,244,241,0.09);
+    --coral:        #FF5A5F;
+    --amber:        #FFB627;
+    --mint:         #4ECDC4;
+    --mint-dim:     rgba(78,205,196,0.14);
+    --coral-dim:    rgba(255,90,95,0.14);
+    --glow-a:       rgba(78,205,196,0.07);
+    --glow-b:       rgba(255,90,95,0.05);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{ height: 100%; margin: 0; }
+
+  body{
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(circle at 12% 0%, var(--glow-a), transparent 45%),
+      radial-gradient(circle at 100% 20%, var(--glow-b), transparent 40%);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .mono{ font-family: 'Space Mono', monospace; }
+
+  /* ---------- HEADER ---------- */
+  header{
+    width:100%;
+    max-width: 980px;
+    text-align:center;
+    padding: clamp(28px, 5vw, 48px) 20px 10px;
+  }
+  .brand{
+    display:inline-flex; align-items:center; gap:10px;
+    font-size: 0.85rem; font-weight:700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 14px;
+  }
+  .brand .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--mint); box-shadow: 0 0 0 4px var(--mint-dim);
+  }
+  header h1{
+    margin: 0 0 6px;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight:700;
+  }
+  header p{
+    margin:0; color: var(--ink-dim); font-size: 1rem;
+  }
+
+  .wrap{ width:100%; max-width: 980px; padding: 12px clamp(16px, 4vw, 32px) 60px; }
+
+  /* ---------- YOUR-TURN BANNER ---------- */
+  #turnBanner{
+    display:none;
+    background: var(--coral-dim);
+    border: 1px solid var(--coral);
+    color: var(--coral);
+    border-radius: 14px;
+    padding: 16px 22px;
+    text-align:center;
+    font-weight:700;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 22px;
+    animation: pulseGlow 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%, 100%{ box-shadow: 0 0 0 0 rgba(255,90,95,0.25); }
+    50%{ box-shadow: 0 0 0 10px rgba(255,90,95,0); }
+  }
+
+  /* ---------- DUAL TOKEN BOARD ---------- */
+  .board{
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
+    gap: 18px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: clamp(24px, 4vw, 40px);
+    margin-bottom: 24px;
+  }
+  .token-block{ text-align:center; }
+  .token-block .label{
+    font-size: 0.72rem; font-weight:700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 14px;
+  }
+  .flaps{ display:flex; justify-content:center; gap:6px; }
+  .flap{
+    width: 64px; height: 88px;
+    background: var(--bg-flap);
+    border: 1px solid rgba(234,244,241,0.12);
+    border-radius: 9px;
+    display:flex; align-items:center; justify-content:center;
+    font-family: 'Space Mono', monospace;
+    font-size: 2.9rem; font-weight:700;
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 18px rgba(0,0,0,0.35);
+  }
+  .flap::after{
+    content:""; position:absolute; left:0; right:0; top:50%; height:1px;
+    background: rgba(0,0,0,0.45);
+  }
+  #yourFlaps .flap{ color: var(--mint); }
+  #currentFlaps .flap{ color: var(--coral); }
+
+  .board-divider{
+    width:1px; height: 80px; background: var(--line);
+    justify-self:center;
+  }
+
+  /* ---------- STAT STRIP ---------- */
+  .stats{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat{
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--stat-color, var(--mint));
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-align:center;
+  }
+  .stat .label{
+    font-size: 0.7rem; font-weight:700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 8px;
+  }
+  .stat .value{ font-family:'Space Mono', monospace; font-size: 1.7rem; font-weight:700; }
+
+  /* ---------- PROGRESS ---------- */
+  .progress-panel{
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px;
+  }
+  .progress-panel .top-row{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 12px;
+  }
+  .progress-panel .top-row h5{ margin:0; font-size: 0.85rem; font-weight:700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-dim); }
+  .progress-panel .top-row span{ font-family:'Space Mono', monospace; font-size: 0.85rem; color: var(--mint); }
+
+  .progress-track{
+    width:100%; height: 14px; border-radius: 999px;
+    background: var(--bg-flap);
+    overflow:hidden;
+    border: 1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--mint), var(--mint) 60%, var(--amber));
+    width: 0%;
+    transition: width 0.6s ease;
+    position: relative;
+    overflow:hidden;
+  }
+  .progress-fill::after{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,0.18) 0 10px, transparent 10px 20px);
+    animation: slide 1.4s linear infinite;
+  }
+  @keyframes slide{ from{ background-position:0 0; } to{ background-position: 40px 0; } }
+
+  footer{
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    text-align:center;
+    padding: 10px 0 30px;
+  }
+
+  @media (max-width: 600px){
+    .board{ grid-template-columns: 1fr; }
+    .board-divider{ width: 80px; height:1px; margin: 4px 0; }
+    .flap{ width:48px; height:66px; font-size: 2.1rem; }
+    .stats{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ animation: none !important; transition: none !important; } }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand"><span class="dot"></span>Queue Cure</div>
+  <h1>🏥 Patient Waiting Room</h1>
+  <p>Stay nearby — we'll call your token when it's ready.</p>
+</header>
+
+<div class="wrap">
+
+  <div id="turnBanner">🔔 It's your turn — please proceed to the doctor.</div>
+
+  {% set your_str = "%03d"|format(token) %}
+  {% set curr_str = "%03d"|format(current_token) %}
+
+  <div class="board">
+    <div class="token-block">
+      <div class="label">Your Token</div>
+      <div class="flaps" id="yourFlaps">
+        <div class="flap">{{ your_str[0] }}</div>
+        <div class="flap">{{ your_str[1] }}</div>
+        <div class="flap">{{ your_str[2] }}</div>
+      </div>
+    </div>
+
+    <div class="board-divider"></div>
+
+    <div class="token-block">
+      <div class="label">Now Serving</div>
+      <div class="flaps" id="currentFlaps">
+        <div class="flap">{{ curr_str[0] }}</div>
+        <div class="flap">{{ curr_str[1] }}</div>
+        <div class="flap">{{ curr_str[2] }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat" style="--stat-color: var(--amber);">
+      <div class="label">Tokens Ahead</div>
+      <div class="value">{{ tokens_ahead }}</div>
+    </div>
+    <div class="stat" style="--stat-color: var(--mint);">
+      <div class="label">Estimated Wait</div>
+      <div class="value">{{ wait_time }} min</div>
+    </div>
+  </div>
+
+  <div class="progress-panel">
+    <div class="top-row">
+      <h5>Queue Progress</h5>
+      <span id="progressPct">—</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>This page updates automatically — no need to refresh.</footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  const YOUR_TOKEN = Number("{{ token }}");
+  const CURRENT_TOKEN = Number("{{ current_token }}");
+  const TOKENS_AHEAD = Number("{{ tokens_ahead }}");
+
+  // Drive the progress bar from tokens ahead vs. your token (caps at 0-100%)
+  (function(){
+    const total = Math.max(YOUR_TOKEN, 1);
+    const done = Math.max(total - TOKENS_AHEAD, 0);
+    const pct = Math.min(100, Math.round((done / total) * 100));
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  })();
+
+  // Highlight when it's this patient's turn
+  if (CURRENT_TOKEN === YOUR_TOKEN) {
+    document.getElementById('turnBanner').style.display = 'block';
+  }
+
+  const socket = io();
+
+  socket.on("queue_updated", function() {
+    location.reload();
+  });
+
+  socket.on("announce_token", function(data){
+    let speech = new SpeechSynthesisUtterance(
+      "Token " + data.token + " Please proceed to the doctor"
+    );
+    speechSynthesis.speak(speech);
+  });
+</script>
+
+</body>
+</html>
